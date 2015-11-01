@@ -15,7 +15,6 @@ class Buyer() extends Actor {
     case SearchResponse(results: Iterable[ActorRef]) =>
       scheduleBids(results)
       context.become(receiveWithNotifications)
-    case SoldNotification => println("Dear Buyer, you bought " + sender().toString())
   }
 
   def receiveWithNotifications: Receive = {
