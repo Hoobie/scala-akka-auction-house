@@ -17,10 +17,15 @@ object AuctionHouse {
 
     system.actorOf(Props[AuctionSearch], "auctionSearch")
 
-    Thread.sleep(100)
+    Thread.sleep(200)
 
     system.actorOf(Props(classOf[Buyer]), "buyer1")
     system.actorOf(Props(classOf[Buyer]), "buyer2")
     system.actorOf(Props(classOf[Buyer]), "buyer3")
+    system.actorOf(Props(classOf[Buyer]), "buyer4")
+    system.actorOf(Props(classOf[Buyer]), "buyer5")
+    system.actorOf(Props(classOf[Buyer]), "buyer6")
+    system.actorOf(Props(classOf[Buyer]), "buyer7")
+    system.actorOf(Props(classOf[Buyer]), "buyer8")
   }
 }

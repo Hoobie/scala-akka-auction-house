@@ -14,7 +14,9 @@ case class BidTimeout() extends AuctionMessage
 
 case class Restart() extends AuctionMessage
 
-case class Bid(buyer: ActorRef, value: BigDecimal) extends AuctionMessage
+case class Bid(buyer: ActorRef, value: BigDecimal, maxValue: BigDecimal) extends AuctionMessage
+
+case class HigherBidNotification() extends UserMessage
 
 case class SoldNotification() extends UserMessage
 

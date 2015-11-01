@@ -9,8 +9,8 @@ import scala.util.Random
 
 class Auction(title: String) extends Actor with FSM[State, Data] {
 
-  private val MAX_BID_TIME: Int = 60
-  private val MAX_DELETION_TIME: Int = 30
+  val MAX_BID_TIME: Int = 60
+  val MAX_DELETION_TIME: Int = 30
 
   def startBidTimer = context.system.scheduler.scheduleOnce(Random.nextInt(MAX_BID_TIME).seconds, self, BidTimeout)
 
@@ -18,12 +18,12 @@ class Auction(title: String) extends Actor with FSM[State, Data] {
 
   context.actorSelection("../../auctionSearch") ! Register(title)
 
-  startWith(Created, CurrentBid(null, 0))
+  startWith(Created, CurrentBid(null, 0, 0))
 
   when(Created) {
-    case Event(Bid(buyer, value), currentBid: CurrentBid) if value > currentBid.value =>
-      log.info("Higher bid: {}!", value)
-      goto(Activated) using CurrentBid(buyer, value)
+    case Event(Bid(buyer, value, maxValue), currentBid: CurrentBid) =>
+      log.info("First bid: {}!", value)
+      goto(Activated) using CurrentBid(buyer, value, maxValue)
     case Event(BidTimeout, _) =>
       log.info("Auction ignored :(")
       goto(Ignored)
@@ -41,9 +41,14 @@ class Auction(title: String) extends Actor with FSM[State, Data] {
   }
 
   when(Activated) {
-    case Event(Bid(buyer, value), currentBid: CurrentBid) if value > currentBid.value =>
-      log.info("Higher bid: {}!", value)
-      stay() using CurrentBid(buyer, value)
+    case Event(Bid(buyer, value, maxValue), currentBid: CurrentBid) if value > currentBid.maxValue =>
+      log.info("Bid raised: {}!", value)
+      currentBid.buyer ! HigherBidNotification
+      stay() using CurrentBid(buyer, value, maxValue)
+    case Event(Bid(_, value, maxValue), currentBid: CurrentBid) if value > currentBid.value =>
+      log.info("Bid bumped up to: {}!", value)
+      currentBid.buyer ! HigherBidNotification
+      stay() using CurrentBid(currentBid.buyer, value, currentBid.maxValue)
     case Event(BidTimeout, currentBid: CurrentBid) =>
       log.info("Item sold for {} to {}!", currentBid.value, currentBid.buyer.toString())
       currentBid.buyer ! SoldNotification
@@ -60,7 +65,7 @@ class Auction(title: String) extends Actor with FSM[State, Data] {
 
   whenUnhandled {
     case Event(e, s) =>
-//      log.warning("Received unhandled message {} in state {}/{}", e, stateName, s)
+      //      log.warning("Received unhandled message {} in state {}/{}", e, stateName, s)
       stay()
   }
 
@@ -79,4 +84,4 @@ case object Sold extends State
 
 sealed trait Data
 
-case class CurrentBid(buyer: ActorRef, value: BigDecimal) extends Data
+case class CurrentBid(buyer: ActorRef, value: BigDecimal, maxValue: BigDecimal) extends Data
