@@ -9,6 +9,6 @@ class Seller(auctionNames: List[String]) extends Actor {
 
   override def receive: Receive = {
     case SoldNotification =>
-      println("You sold {}!", sender())
+      println("Dear Seller, you sold " + sender().toString())
   }
 }

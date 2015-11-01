@@ -22,30 +22,30 @@ class Auction(title: String) extends Actor with FSM[State, Data] {
 
   when(Created) {
     case Event(Bid(buyer, value), currentBid: CurrentBid) if value > currentBid.value =>
-      log.debug("Higher bid: {}!", value)
+      log.info("Higher bid: {}!", value)
       goto(Activated) using CurrentBid(buyer, value)
     case Event(BidTimeout, _) =>
-      log.debug("Auction ignored :(")
+      log.info("Auction ignored :(")
       goto(Ignored)
   }
 
   when(Ignored, stateTimeout = Random.nextInt(MAX_DELETION_TIME).second) {
     case Event(StateTimeout, _) =>
-      log.debug("Ignored auction deleted...")
+      log.info("Ignored auction deleted...")
       context.stop(self)
       stay()
     case Event(Restart, _) =>
-      log.debug("Auction restarted.")
+      log.info("Auction restarted.")
       startBidTimer
       goto(Created)
   }
 
   when(Activated) {
     case Event(Bid(buyer, value), currentBid: CurrentBid) if value > currentBid.value =>
-      log.debug("Higher bid: {}!", value)
+      log.info("Higher bid: {}!", value)
       stay() using CurrentBid(buyer, value)
     case Event(BidTimeout, currentBid: CurrentBid) =>
-      log.debug("Item sold for {} to {}!", currentBid.value, currentBid.buyer.toString())
+      log.info("Item sold for {} to {}!", currentBid.value, currentBid.buyer.toString())
       currentBid.buyer ! SoldNotification
       context.parent ! SoldNotification
       goto(Sold)
@@ -53,14 +53,14 @@ class Auction(title: String) extends Actor with FSM[State, Data] {
 
   when(Sold, stateTimeout = Random.nextInt(MAX_DELETION_TIME).second) {
     case Event(StateTimeout, _) =>
-      log.debug("Sold auction deleted...")
+      log.info("Sold auction deleted...")
       context.stop(self)
       stay()
   }
 
   whenUnhandled {
     case Event(e, s) =>
-      //log.warning("Received unhandled message {} in state {}/{}", e, stateName, s)
+//      log.warning("Received unhandled message {} in state {}/{}", e, stateName, s)
       stay()
   }
 

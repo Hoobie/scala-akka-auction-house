@@ -10,7 +10,7 @@ object AuctionHouse {
   val log = Logging(system, AuctionHouse.getClass.getName)
 
   def main(args: Array[String]) {
-    log.debug("Initializing auction house.")
+    log.info("Initializing auction house.")
 
     system.actorOf(Props(classOf[Seller], List("auction1", "auction2")), "seller1")
     system.actorOf(Props(classOf[Seller], List("auction3", "auction4")), "seller2")

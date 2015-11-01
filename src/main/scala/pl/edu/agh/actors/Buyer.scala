@@ -15,6 +15,6 @@ class Buyer() extends Actor {
     case SearchResponse(results: Iterable[ActorRef]) => results.map(auction =>
       context.system.scheduler.schedule(0.seconds, Random.nextInt(10).seconds, auction, Bid(self, BigDecimal(Random.nextInt(100)))))
     case SoldNotification =>
-      println("You bought {}!", sender())
+      println("Dear Buyer, you bought " + sender().toString())
   }
 }
