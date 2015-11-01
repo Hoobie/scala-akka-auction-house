@@ -1,13 +1,13 @@
 package pl.edu.agh.actors
 
 import akka.actor.{Actor, ActorRef, FSM}
-import pl.edu.agh.{Bid, BidTimeout, Restart, SoldNotification}
+import pl.edu.agh._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.util.Random
 
-class Auction extends Actor with FSM[State, Data] {
+class Auction(title: String) extends Actor with FSM[State, Data] {
 
   private val MAX_BID_TIME: Int = 60
   private val MAX_DELETION_TIME: Int = 30
@@ -15,6 +15,8 @@ class Auction extends Actor with FSM[State, Data] {
   def startBidTimer = context.system.scheduler.scheduleOnce(Random.nextInt(MAX_BID_TIME).seconds, self, BidTimeout)
 
   startBidTimer
+
+  context.actorSelection("../../auctionSearch") ! Register(title)
 
   startWith(Created, CurrentBid(null, 0))
 
@@ -45,7 +47,7 @@ class Auction extends Actor with FSM[State, Data] {
     case Event(BidTimeout, currentBid: CurrentBid) =>
       log.debug("Item sold for {} to {}!", currentBid.value, currentBid.buyer.toString())
       currentBid.buyer ! SoldNotification
-      // TODO: Notify Seller
+      context.parent ! SoldNotification
       goto(Sold)
   }
 
