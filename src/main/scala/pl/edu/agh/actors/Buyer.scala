@@ -9,7 +9,7 @@ import scala.util.Random
 
 class Buyer() extends Actor {
 
-  context.actorSelection("../auctionSearch") ! SearchRequest("auction" + (Random.nextInt(3) + 1))
+  context.actorSelection("/user/auctionSearch") ! SearchRequest("auction" + (Random.nextInt(3) + 1))
 
   override def receive: Receive = {
     case SearchResponse(results: Iterable[ActorRef]) =>

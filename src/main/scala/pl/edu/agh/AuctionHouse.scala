@@ -12,10 +12,10 @@ object AuctionHouse {
   def main(args: Array[String]) {
     log.info("Initializing auction house.")
 
+    system.actorOf(Props[AuctionSearch], "auctionSearch")
+
     system.actorOf(Props(classOf[Seller], List("auction1", "auction2")), "seller1")
     system.actorOf(Props(classOf[Seller], List("auction3", "auction4")), "seller2")
-
-    system.actorOf(Props[AuctionSearch], "auctionSearch")
 
     Thread.sleep(200)
 

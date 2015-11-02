@@ -24,5 +24,5 @@ case class Register(title: String) extends SearchMessage
 
 case class SearchRequest(titlePart: String) extends SearchMessage
 
-case class SearchResponse(results: Iterable[ActorRef]) extends SearchMessage
+case class SearchResponse(results: List[ActorRef]) extends SearchMessage
 
