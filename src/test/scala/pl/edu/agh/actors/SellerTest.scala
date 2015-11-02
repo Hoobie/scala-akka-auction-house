@@ -24,7 +24,7 @@ with WordSpecLike with Matchers with BeforeAndAfterAll with ImplicitSender {
       system.actorOf(Props(new Seller(List("auction1", "auction2", "auction3", "auction4")) {
 
         override def receive: Receive = {
-          case x => proxy.ref forward x
+          case x => proxy.ref.forward(x)
         }
       }))
 

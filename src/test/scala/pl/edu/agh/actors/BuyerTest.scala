@@ -1,14 +1,18 @@
 package pl.edu.agh.actors
 
 import akka.actor._
-import akka.testkit.{ImplicitSender, TestKit}
+import akka.testkit.{ImplicitSender, TestKit, TestProbe}
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
-import pl.edu.agh.{Bid, Register}
+import pl.edu.agh._
+
+import scala.concurrent.duration._
 
 class BuyerTest(_system: ActorSystem) extends TestKit(_system)
 with WordSpecLike with Matchers with BeforeAndAfterAll with ImplicitSender {
 
   def this() = this(ActorSystem("BuyerTest"))
+
+  val auctionSearch = system.actorOf(Props[AuctionSearch], "auctionSearch")
 
   override def afterAll() {
     TestKit.shutdownActorSystem(system)
@@ -16,7 +20,6 @@ with WordSpecLike with Matchers with BeforeAndAfterAll with ImplicitSender {
 
   "A Buyer" must {
     "bid" in {
-      val auctionSearch = system.actorOf(Props[AuctionSearch], "auctionSearch")
       auctionSearch ! Register("auction1")
       auctionSearch ! Register("auction2")
       auctionSearch ! Register("auction3")
@@ -25,6 +28,20 @@ with WordSpecLike with Matchers with BeforeAndAfterAll with ImplicitSender {
       system.actorOf(Props[Buyer])
 
       expectMsgAnyClassOf(classOf[Bid])
+    }
+
+    "get notified" in {
+      system.actorOf(Props(classOf[Seller], List("auction1", "auction2", "auction3", "auction4")), "seller")
+
+      Thread.sleep(200)
+      val proxy = TestProbe()
+      system.actorOf(Props(new Buyer() {
+        override def receiveWithNotifications: Receive = {
+          case x => proxy.ref.forward(x)
+        }
+      }))
+
+      proxy.expectMsg(60.seconds, SoldNotification)
     }
   }
 }
