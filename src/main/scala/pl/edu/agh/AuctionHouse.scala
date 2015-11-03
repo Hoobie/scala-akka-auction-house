@@ -17,8 +17,6 @@ object AuctionHouse {
     system.actorOf(Props(classOf[Seller], List("auction1", "auction2")), "seller1")
     system.actorOf(Props(classOf[Seller], List("auction3", "auction4")), "seller2")
 
-    Thread.sleep(200)
-
     system.actorOf(Props(classOf[Buyer]), "buyer1")
     system.actorOf(Props(classOf[Buyer]), "buyer2")
     system.actorOf(Props(classOf[Buyer]), "buyer3")

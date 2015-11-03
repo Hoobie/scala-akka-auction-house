@@ -4,14 +4,18 @@ import akka.actor.{Actor, ActorRef}
 import pl.edu.agh._
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.util.Random
 
 class Buyer() extends Actor {
 
-  context.actorSelection("/user/auctionSearch") ! SearchRequest("auction" + (Random.nextInt(3) + 1))
+  val eventualAuctionSearch: Future[ActorRef] = context.actorSelection("/user/auctionSearch").resolveOne(1.seconds)
+  eventualAuctionSearch onSuccess {
+    case auctionSearch => context.system.scheduler.scheduleOnce(1.seconds, auctionSearch, SearchRequest("auction" + (Random.nextInt(3) + 1)))
+  }
 
-  override def receive: Receive = {
+  override def receive = {
     case SearchResponse(results: Iterable[ActorRef]) =>
       scheduleBids(results)
       context.become(receiveWithNotifications)

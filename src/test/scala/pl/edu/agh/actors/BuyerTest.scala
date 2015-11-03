@@ -33,7 +33,6 @@ with WordSpecLike with Matchers with BeforeAndAfterAll with ImplicitSender {
     "get notified" in {
       system.actorOf(Props(classOf[Seller], List("auction1", "auction2", "auction3", "auction4")), "seller")
 
-      Thread.sleep(200)
       val proxy = TestProbe()
       system.actorOf(Props(new Buyer() {
         override def receiveWithNotifications: Receive = {
