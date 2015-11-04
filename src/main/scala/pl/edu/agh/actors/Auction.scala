@@ -16,7 +16,7 @@ class Auction(title: String) extends Actor with FSM[State, Data] {
 
   startBidTimer
 
-  context.actorSelection("../../auctionSearch") ! Register(title)
+  context.actorSelection("/user/auctionSearch") ! Register(title)
 
   startWith(Created, CurrentBid(null, 0, 0))
 

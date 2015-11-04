@@ -8,17 +8,17 @@ sealed trait UserMessage
 
 sealed trait SearchMessage
 
-case class Start() extends AuctionMessage
+case object Start extends AuctionMessage
 
-case class BidTimeout() extends AuctionMessage
+case object BidTimeout extends AuctionMessage
 
-case class Restart() extends AuctionMessage
+case object Restart extends AuctionMessage
 
 case class Bid(buyer: ActorRef, value: BigDecimal, maxValue: BigDecimal) extends AuctionMessage
 
-case class HigherBidNotification() extends UserMessage
+case object HigherBidNotification extends UserMessage
 
-case class SoldNotification() extends UserMessage
+case object SoldNotification extends UserMessage
 
 case class Register(title: String) extends SearchMessage
 
