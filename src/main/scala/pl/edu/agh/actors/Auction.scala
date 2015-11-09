@@ -1,87 +1,144 @@
 package pl.edu.agh.actors
 
-import akka.actor.{Actor, ActorRef, FSM}
+import java.util.concurrent.TimeUnit
+
+import akka.actor.{Actor, ActorRef}
+import akka.persistence.fsm.PersistentFSM
+import akka.persistence.fsm.PersistentFSM.FSMState
+import com.github.nscala_time.time.Imports._
 import pl.edu.agh._
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
-import scala.util.Random
+import scala.concurrent.duration.FiniteDuration
+import scala.reflect._
 
-class Auction(title: String) extends Actor with FSM[State, Data] {
+class Auction(title: String, baseEndTime: DateTime) extends Actor with PersistentFSM[State, Data, AuctionEvent] {
 
-  val MAX_BID_TIME: Int = 60
-  val MAX_DELETION_TIME: Int = 30
+  private val DELETION_SECONDS: Int = 5
 
-  def startBidTimer = context.system.scheduler.scheduleOnce(Random.nextInt(MAX_BID_TIME).seconds, self, BidTimeout)
+  override def persistenceId: String = title
 
-  startBidTimer
+  override def domainEventClassTag: ClassTag[AuctionEvent] = classTag[AuctionEvent]
 
-  context.actorSelection("/user/auctionSearch") ! Register(title)
+  def startBidTimer(duration: Duration) = context.system.scheduler.scheduleOnce(
+    FiniteDuration(duration.seconds, TimeUnit.SECONDS), self, BidTimeout)
 
-  startWith(Created, CurrentBid(null, 0, 0))
+  startWith(Uninitialized, EmptyData)
 
-  when(Created) {
-    case Event(Bid(buyer, value, maxValue), currentBid: CurrentBid) =>
-      log.info("First bid: {}!", value)
-      goto(Activated) using CurrentBid(buyer, value, maxValue)
-    case Event(BidTimeout, _) =>
-      log.info("Auction ignored :(")
-      goto(Ignored)
+  when(Uninitialized) {
+    case Event(StartCommand, _) =>
+      goto(Created) applying StartEvent(baseEndTime) andThen {
+        _ => log.info("Auction created.")
+      }
   }
 
-  when(Ignored, stateTimeout = Random.nextInt(MAX_DELETION_TIME).second) {
+  when(Created) {
+    case Event(BidCommand(buyer, value, maxValue), _) if value > 0 =>
+      goto(Activated) applying BidEvent(buyer, value, maxValue) andThen {
+        _ => log.info("First bid: {}!", value)
+      }
+    case Event(BidTimeout, _) =>
+      goto(Ignored) andThen {
+        _ => log.info("Auction ignored :(")
+      }
+  }
+
+  when(Ignored, stateTimeout = FiniteDuration(DELETION_SECONDS, TimeUnit.SECONDS)) {
     case Event(StateTimeout, _) =>
-      log.info("Ignored auction deleted...")
-      context.stop(self)
-      stay()
-    case Event(Restart, _) =>
-      log.info("Auction restarted.")
-      startBidTimer
-      goto(Created)
+      stop()
+    case Event(RestartCommand, _) =>
+      goto(Created) applying StartEvent(baseEndTime) andThen {
+        _ => log.info("Auction restarted.")
+      }
   }
 
   when(Activated) {
-    case Event(Bid(buyer, value, maxValue), currentBid: CurrentBid) if value > currentBid.maxValue =>
-      log.info("Bid raised: {}!", value)
-      currentBid.buyer ! HigherBidNotification
-      stay() using CurrentBid(buyer, value, maxValue)
-    case Event(Bid(_, value, maxValue), currentBid: CurrentBid) if value > currentBid.value =>
-      log.info("Bid bumped up to: {}!", value)
-      currentBid.buyer ! HigherBidNotification
-      stay() using CurrentBid(currentBid.buyer, value, currentBid.maxValue)
-    case Event(BidTimeout, currentBid: CurrentBid) =>
-      log.info("Item sold for {} to {}!", currentBid.value, currentBid.buyer.toString())
-      currentBid.buyer ! SoldNotification
-      context.parent ! SoldNotification
-      goto(Sold)
+    case Event(BidCommand(buyer, value, maxValue), bidData: BidData) if value > bidData.maxValue =>
+      stay applying BidEvent(buyer, value, maxValue) andThen {
+        _ =>
+          log.info("Bid raised: {}!", value)
+          bidData.buyer ! HigherBidNotification
+      }
+    case Event(BidCommand(_, value, _), bidData: BidData) if value > bidData.value =>
+      stay applying BidEvent(bidData.buyer, value, bidData.maxValue) andThen {
+        _ =>
+          log.info("Bid bumped up to: {}!", value)
+          bidData.buyer ! HigherBidNotification
+      }
+    case Event(BidTimeout, bidData: BidData) =>
+      goto(Sold) andThen {
+        _ =>
+          log.info("Item sold for {} to {}!", bidData.value, bidData.buyer)
+          bidData.buyer ! SoldNotification
+          context.parent ! SoldNotification
+      }
   }
 
-  when(Sold, stateTimeout = Random.nextInt(MAX_DELETION_TIME).second) {
+  when(Sold, stateTimeout = FiniteDuration(DELETION_SECONDS, TimeUnit.SECONDS)) {
     case Event(StateTimeout, _) =>
-      log.info("Sold auction deleted...")
-      context.stop(self)
-      stay()
+      stop()
   }
 
   whenUnhandled {
-    case Event(e, s) =>
-      //      log.warning("Received unhandled message {} in state {}/{}", e, stateName, s)
+    case Event(_, _) =>
       stay()
   }
 
   initialize()
+
+  self ! StartCommand
+
+  override def applyEvent(event: AuctionEvent, data: Data): Data = {
+    event match {
+      case StartEvent(endTime) =>
+        context.actorSelection("/user/auctionSearch") ! Register(title)
+
+        val now: DateTime = DateTime.now()
+        if (now.isBefore(endTime)) {
+          val duration: Duration = (now to endTime).toDuration
+          log.info("Bid timeout: {} seconds", duration.seconds)
+          startBidTimer(duration)
+        }
+        StartupData(endTime)
+
+      case BidEvent(buyer, value, maxValue) =>
+        BidData(buyer, value, maxValue)
+    }
+  }
 }
 
-sealed trait State
+sealed trait State extends FSMState
 
-case object Created extends State
+case object Uninitialized extends State {
+  override def identifier: String = "uninitialized"
+}
 
-case object Ignored extends State
+case object Created extends State {
+  override def identifier: String = "created"
+}
 
-case object Activated extends State
+case object Ignored extends State {
+  override def identifier: String = "ignored"
+}
 
-case object Sold extends State
+case object Activated extends State {
+  override def identifier: String = "activated"
+}
+
+case object Sold extends State {
+  override def identifier: String = "sold"
+}
 
 sealed trait Data
 
-case class CurrentBid(buyer: ActorRef, value: BigDecimal, maxValue: BigDecimal) extends Data
+case object EmptyData extends Data
+
+case class StartupData(endTime: DateTime) extends Data
+
+case class BidData(buyer: ActorRef, value: BigDecimal, maxValue: BigDecimal) extends Data
+
+sealed trait AuctionEvent
+
+case class StartEvent(endTime: DateTime) extends AuctionEvent
+
+case class BidEvent(buyer: ActorRef, value: BigDecimal, maxValue: BigDecimal) extends AuctionEvent

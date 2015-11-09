@@ -27,7 +27,7 @@ with WordSpecLike with Matchers with BeforeAndAfterAll with ImplicitSender {
 
       system.actorOf(Props[Buyer])
 
-      expectMsgAnyClassOf(classOf[Bid])
+      expectMsgAnyClassOf(classOf[BidCommand])
     }
 
     "get notified" in {
