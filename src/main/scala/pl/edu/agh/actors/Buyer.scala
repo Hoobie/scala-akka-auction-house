@@ -39,7 +39,7 @@ class Buyer extends Actor with ActorLogging {
     results.map(auction => {
       val value = BigDecimal(Random.nextInt(MAX_BID_VALUE))
       val duration = Random.nextInt(MAX_BID_DELAY).seconds
-      context.system.scheduler.schedule(duration, duration, auction, BidCommand(self, value, value + Random.nextInt(MAX_BID_VALUE)))
+      context.system.scheduler.schedule(1.second, duration, auction, BidCommand(self, value, value + Random.nextInt(MAX_BID_VALUE)))
     })
   }
 }

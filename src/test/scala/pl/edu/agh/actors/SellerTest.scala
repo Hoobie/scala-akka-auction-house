@@ -1,22 +1,17 @@
 package pl.edu.agh.actors
 
 import akka.actor._
-import akka.testkit.{ImplicitSender, TestKit, TestProbe}
+import akka.testkit.{ImplicitSender, TestProbe}
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 import pl.edu.agh._
+import pl.edu.agh.spec.InMemoryJournalSpec
 
 import scala.concurrent.duration._
 
-class SellerTest(_system: ActorSystem) extends TestKit(_system)
+class SellerTest extends InMemoryJournalSpec
 with WordSpecLike with Matchers with BeforeAndAfterAll with ImplicitSender {
 
-  def this() = this(ActorSystem("SellerTest"))
-
   val auctionSearch = system.actorOf(Props[AuctionSearch], "auctionSearch")
-
-  override def afterAll() {
-    TestKit.shutdownActorSystem(system)
-  }
 
   "A Seller" must {
     "receive a sold notification" in {
@@ -28,7 +23,6 @@ with WordSpecLike with Matchers with BeforeAndAfterAll with ImplicitSender {
         }
       }))
 
-      Thread.sleep(200)
       system.actorOf(Props[Buyer])
 
       proxy.expectMsg(60.seconds, SoldNotification)

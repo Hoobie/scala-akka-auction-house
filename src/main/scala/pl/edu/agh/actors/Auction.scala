@@ -2,7 +2,7 @@ package pl.edu.agh.actors
 
 import java.util.concurrent.TimeUnit
 
-import akka.actor.{Actor, ActorRef}
+import akka.actor.ActorRef
 import akka.persistence.fsm.PersistentFSM
 import akka.persistence.fsm.PersistentFSM.FSMState
 import com.github.nscala_time.time.Imports._
@@ -12,7 +12,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.FiniteDuration
 import scala.reflect._
 
-class Auction(title: String, baseEndTime: DateTime) extends Actor with PersistentFSM[State, Data, AuctionEvent] {
+class Auction(title: String, baseEndTime: DateTime) extends PersistentFSM[State, Data, AuctionEvent] {
 
   private val DELETION_SECONDS: Int = 5
 

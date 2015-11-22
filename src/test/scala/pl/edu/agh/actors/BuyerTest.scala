@@ -1,22 +1,17 @@
 package pl.edu.agh.actors
 
 import akka.actor._
-import akka.testkit.{ImplicitSender, TestKit, TestProbe}
+import akka.testkit.{ImplicitSender, TestProbe}
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 import pl.edu.agh._
+import pl.edu.agh.spec.InMemoryJournalSpec
 
 import scala.concurrent.duration._
 
-class BuyerTest(_system: ActorSystem) extends TestKit(_system)
+class BuyerTest extends InMemoryJournalSpec
 with WordSpecLike with Matchers with BeforeAndAfterAll with ImplicitSender {
 
-  def this() = this(ActorSystem("BuyerTest"))
-
   val auctionSearch = system.actorOf(Props[AuctionSearch], "auctionSearch")
-
-  override def afterAll() {
-    TestKit.shutdownActorSystem(system)
-  }
 
   "A Buyer" must {
     "bid" in {
