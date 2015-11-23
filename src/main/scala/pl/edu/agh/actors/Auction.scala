@@ -14,7 +14,7 @@ import scala.reflect._
 
 class Auction(title: String, baseEndTime: DateTime) extends PersistentFSM[State, Data, AuctionEvent] {
 
-  private val DeletionSeconds: Int = 5
+  private val DeletionSeconds = 5
 
   private val notifier = context.actorSelection(ActorPaths.NotifierPath)
 
