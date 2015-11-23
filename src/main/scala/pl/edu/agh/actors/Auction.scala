@@ -6,7 +6,7 @@ import akka.actor.ActorRef
 import akka.persistence.fsm.PersistentFSM
 import akka.persistence.fsm.PersistentFSM.FSMState
 import com.github.nscala_time.time.Imports._
-import pl.edu.agh._
+import pl.edu.agh.messages._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.FiniteDuration
@@ -14,7 +14,9 @@ import scala.reflect._
 
 class Auction(title: String, baseEndTime: DateTime) extends PersistentFSM[State, Data, AuctionEvent] {
 
-  private val DELETION_SECONDS: Int = 5
+  private val DeletionSeconds: Int = 5
+
+  private val notifier = context.actorSelection(ActorPaths.NotifierPath)
 
   override def persistenceId: String = title
 
@@ -35,7 +37,9 @@ class Auction(title: String, baseEndTime: DateTime) extends PersistentFSM[State,
   when(Created) {
     case Event(BidCommand(buyer, value, maxValue), _) if value > 0 =>
       goto(Activated) applying BidEvent(buyer, value, maxValue) andThen {
-        _ => log.info("First bid: {}!", value)
+        _ =>
+          log.info("First bid: {}!", value)
+          notifier ! Notify(title, buyer, value)
       }
     case Event(BidTimeout, _) =>
       goto(Ignored) andThen {
@@ -43,8 +47,9 @@ class Auction(title: String, baseEndTime: DateTime) extends PersistentFSM[State,
       }
   }
 
-  when(Ignored, stateTimeout = FiniteDuration(DELETION_SECONDS, TimeUnit.SECONDS)) {
+  when(Ignored, stateTimeout = FiniteDuration(DeletionSeconds, TimeUnit.SECONDS)) {
     case Event(StateTimeout, _) =>
+      log.info("Auction deleted.")
       stop()
     case Event(RestartCommand, _) =>
       goto(Created) applying StartEvent(baseEndTime) andThen {
@@ -58,12 +63,14 @@ class Auction(title: String, baseEndTime: DateTime) extends PersistentFSM[State,
         _ =>
           log.info("Bid raised: {}!", value)
           bidData.buyer ! HigherBidNotification
+          notifier ! Notify(title, buyer, value)
       }
     case Event(BidCommand(_, value, _), bidData: BidData) if value > bidData.value =>
       stay applying BidEvent(bidData.buyer, value, bidData.maxValue) andThen {
         _ =>
           log.info("Bid bumped up to: {}!", value)
           bidData.buyer ! HigherBidNotification
+          notifier ! Notify(title, bidData.buyer, value)
       }
     case Event(BidTimeout, bidData: BidData) =>
       goto(Sold) andThen {
@@ -74,8 +81,9 @@ class Auction(title: String, baseEndTime: DateTime) extends PersistentFSM[State,
       }
   }
 
-  when(Sold, stateTimeout = FiniteDuration(DELETION_SECONDS, TimeUnit.SECONDS)) {
+  when(Sold, stateTimeout = FiniteDuration(DeletionSeconds, TimeUnit.SECONDS)) {
     case Event(StateTimeout, _) =>
+      log.info("Auction deleted.")
       stop()
   }
 

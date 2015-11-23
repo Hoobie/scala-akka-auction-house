@@ -3,7 +3,7 @@ package pl.edu.agh.actors
 import akka.actor._
 import akka.testkit.{ImplicitSender, TestKit}
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
-import pl.edu.agh.{Register, SearchRequest, SearchResponse}
+import pl.edu.agh.messages.{Register, SearchRequest, SearchResponse}
 
 class AuctionSearchTest(_system: ActorSystem) extends TestKit(_system)
 with WordSpecLike with Matchers with BeforeAndAfterAll with ImplicitSender {

@@ -1,4 +1,4 @@
-package pl.edu.agh
+package pl.edu.agh.messages
 
 import akka.actor.ActorRef
 
@@ -7,6 +7,8 @@ sealed trait AuctionCommand
 sealed trait UserMessage
 
 sealed trait SearchMessage
+
+sealed trait PublisherMessage
 
 case object StartCommand extends AuctionCommand
 
@@ -26,3 +28,4 @@ case class SearchRequest(titlePart: String) extends SearchMessage
 
 case class SearchResponse(results: Seq[ActorRef]) extends SearchMessage
 
+case class Notify(auctionTitle: String, buyer: ActorRef, value: BigDecimal) extends PublisherMessage

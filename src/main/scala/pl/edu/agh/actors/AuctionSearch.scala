@@ -1,7 +1,7 @@
 package pl.edu.agh.actors
 
 import akka.actor.{Actor, ActorLogging, ActorRef}
-import pl.edu.agh.{Register, SearchRequest, SearchResponse}
+import pl.edu.agh.messages.{Register, SearchRequest, SearchResponse}
 
 import scala.collection.mutable
 

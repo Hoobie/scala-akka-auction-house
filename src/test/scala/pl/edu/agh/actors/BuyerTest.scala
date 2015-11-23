@@ -3,7 +3,7 @@ package pl.edu.agh.actors
 import akka.actor._
 import akka.testkit.{ImplicitSender, TestProbe}
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
-import pl.edu.agh._
+import pl.edu.agh.messages.{BidCommand, Register, SoldNotification}
 import pl.edu.agh.spec.InMemoryJournalSpec
 
 import scala.concurrent.duration._
