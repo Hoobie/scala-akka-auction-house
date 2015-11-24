@@ -99,7 +99,7 @@ class Auction(title: String, baseEndTime: DateTime) extends PersistentFSM[State,
   override def applyEvent(event: AuctionEvent, data: Data): Data = {
     event match {
       case StartEvent(endTime) =>
-        context.actorSelection("/user/auctionSearch") ! Register(title)
+        context.actorSelection(ActorPaths.MasterSearchPath) ! Register(title)
 
         val now: DateTime = DateTime.now()
         if (now.isBefore(endTime)) {

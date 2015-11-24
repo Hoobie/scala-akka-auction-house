@@ -1,7 +1,7 @@
 package pl.edu.agh.actors
 
 object ActorPaths {
-  val AuctionSearchPath = "/user/auctionSearch"
+  val MasterSearchPath = "/user/masterSearch"
 
   val NotifierPath = "/user/notifier"
 

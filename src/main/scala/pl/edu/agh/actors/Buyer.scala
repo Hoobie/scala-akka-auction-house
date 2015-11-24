@@ -14,12 +14,12 @@ class Buyer extends Actor with ActorLogging {
   private val MaxBidValue = 100
   private val AuctionsCount = 4
 
-  private val eventualAuctionSearch: Future[ActorRef] = context.actorSelection(ActorPaths.AuctionSearchPath).resolveOne(1.second)
-  eventualAuctionSearch onSuccess {
-    case auctionSearch =>
+  private val eventualMasterSearch: Future[ActorRef] = context.actorSelection(ActorPaths.MasterSearchPath).resolveOne(1.second)
+  eventualMasterSearch onSuccess {
+    case masterSearch =>
       val title = "auction" + (Random.nextInt(AuctionsCount - 1) + 1)
       log.debug("Buyer is searching for an auction: {}", title)
-      context.system.scheduler.scheduleOnce(1.second, auctionSearch, SearchRequest(title))
+      context.system.scheduler.scheduleOnce(1.second, masterSearch, SearchRequest(title))
   }
 
   override def receive = {

@@ -11,10 +11,10 @@ class AuctionSearch extends Actor with ActorLogging {
 
   override def receive: Receive = {
     case Register(title: String) =>
-      log.debug("Registering title: {}", title)
+      log.info("Registering title: {}", title)
       auctions += (title -> sender)
     case SearchRequest(titlePart: String) =>
-      log.debug("Searching for: {}", titlePart)
+      log.info("Searching for: {}", titlePart)
       sender ! SearchResponse(auctions.filter(_._1.contains(titlePart)).values.toList)
   }
 }

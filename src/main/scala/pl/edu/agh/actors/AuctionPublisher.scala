@@ -16,7 +16,7 @@ class AuctionPublisher extends Actor with ActorLogging {
         counter += 1
         sender() ! Status.Success
       } else {
-        log.error("Error for notification: [{}, {}, {}].", n.auctionTitle, n.buyer, n.value)
+        log.error("Error for: [{}, {}, {}].", n.auctionTitle, n.buyer, n.value)
         counter = 0
         sender() ! Status.Failure(new IllegalStateException())
       }

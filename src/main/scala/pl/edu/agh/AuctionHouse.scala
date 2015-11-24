@@ -19,7 +19,7 @@ object AuctionHouse extends App {
   // remove the line below to make akka-persistence work
   storageLocations foreach FileUtils.deleteRecursively
 
-  system.actorOf(Props[AuctionSearch], "auctionSearch")
+  system.actorOf(Props[MasterSearch], "masterSearch")
 
   system.actorOf(Props(classOf[Seller], List("auction1", "auction2")), "seller1")
   system.actorOf(Props(classOf[Seller], List("auction3", "auction4")), "seller2")
