@@ -3,15 +3,15 @@ package pl.edu.agh.actors
 import akka.actor._
 import akka.testkit.{ImplicitSender, TestProbe}
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
+import pl.edu.agh.InMemoryJournalSpec
 import pl.edu.agh.messages.SoldNotification
-import pl.edu.agh.spec.InMemoryJournalSpec
 
 import scala.concurrent.duration._
 
-class SellerTest extends InMemoryJournalSpec
+class SellerSpec extends InMemoryJournalSpec
 with WordSpecLike with Matchers with BeforeAndAfterAll with ImplicitSender {
 
-  val auctionSearch = system.actorOf(Props[AuctionSearch], "auctionSearch")
+  val masterSearch = system.actorOf(Props[MasterSearch], "masterSearch")
 
   "A Seller" must {
     "receive a sold notification" in {

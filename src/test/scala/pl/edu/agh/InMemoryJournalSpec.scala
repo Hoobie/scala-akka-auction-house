@@ -1,4 +1,4 @@
-package pl.edu.agh.spec
+package pl.edu.agh
 
 import akka.persistence.journal.JournalSpec
 import com.typesafe.config.ConfigFactory

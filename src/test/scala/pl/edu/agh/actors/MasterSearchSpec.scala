@@ -5,10 +5,10 @@ import akka.testkit.{ImplicitSender, TestKit}
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 import pl.edu.agh.messages.{Register, SearchRequest, SearchResponse}
 
-class MasterSearchTest(_system: ActorSystem) extends TestKit(_system)
+class MasterSearchSpec(_system: ActorSystem) extends TestKit(_system)
 with WordSpecLike with Matchers with BeforeAndAfterAll with ImplicitSender {
 
-  def this() = this(ActorSystem("MasterSearchTest"))
+  def this() = this(ActorSystem("MasterSearchSpec"))
 
   val masterSearch = system.actorOf(Props[MasterSearch], "masterSearch")
 
