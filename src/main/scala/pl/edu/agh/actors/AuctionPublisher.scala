@@ -1,7 +1,6 @@
 package pl.edu.agh.actors
 
 import akka.actor.{Actor, ActorLogging, Status}
-import pl.edu.agh.exception.NotificationException
 import pl.edu.agh.messages.Notify
 
 class AuctionPublisher extends Actor with ActorLogging {
@@ -19,7 +18,7 @@ class AuctionPublisher extends Actor with ActorLogging {
       } else {
         log.error("Error for notification: [{}, {}, {}].", n.auctionTitle, n.buyer, n.value)
         counter = 0
-        sender() ! Status.Failure(new NotificationException(n))
+        sender() ! Status.Failure(new IllegalStateException())
       }
   }
 }

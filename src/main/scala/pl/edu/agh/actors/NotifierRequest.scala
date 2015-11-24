@@ -8,9 +8,13 @@ import pl.edu.agh.messages.Notify
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
-class NotifierRequest extends Actor with ActorLogging {
+class NotifierRequest(notification: Notify) extends Actor with ActorLogging {
 
   implicit val timeout = Timeout(3.seconds)
+
+  override def preStart(): Unit = {
+    self ! notification
+  }
 
   override def receive: Receive = {
     case n: Notify =>
